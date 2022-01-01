@@ -1,5 +1,7 @@
 import glob
-from typing import List
+from typing import List, IO
+import tempfile
+import shutil
 
 PAGE_SIZE = 2
 
@@ -29,44 +31,54 @@ def qsort(arr, low, high):
         qsort(arr, pi+1, high)
 
 
-def read_page(filename: str, memory: List[int], idx: int):
+def read_page(fp: IO, memory: List[int], idx: int):
     """
     Read page into memory address idx.
 
     Arguments:
-        filename: The input filename.
+        fp: The input file.
         memory: The memory.
         idx: The memory address to put the page.
     """
-    with open(filename) as fin:
-        for i, num in enumerate(map(int, fin.read().split())):
-            memory[idx + i] = num
+    fp.seek(0)
+    for i, num in enumerate(map(int, fp.read().split())):
+        memory[idx + i] = num
 
 
-def write_page(filename: str, memory: List[int], idx: int):
+def write_page(fp: IO, memory: List[int], idx: int):
     """
     Read page content at memory address idx into filename.
 
     Arguments:
-        filename: The output filename.
+        fp: The output file.
         memory: The memory.
         idx: The memory address of the page to be written.
     """
-    with open(filename, "w") as fout:
-        fout.write(" ".join([str(num) for num in memory[idx:idx+PAGE_SIZE]]))
+    fp.seek(0)
+    fp.write(" ".join([str(num) for num in memory[idx:idx+PAGE_SIZE]]))
 
 
-def merge(memory: List[int], k: int, start: int, end: int, run_len: int):
+def merge(memory: List[int],
+          k: int,
+          run_len: int,
+          input_pages: List[IO],
+          output_pages: List[IO]):
     """
     k-way merge.
 
-    Merge pages p with start <= p < end, p = 0, 1, 2...
-    Page p comes from f"{p+1}.txt"
-    run_len is the number of pages in a sorted run.
+    Merge pages, run_len is the number of pages in a sorted run.
+    Read from input_pages and write to output_pages.
     """
     assert len(memory) == (k + 1) * PAGE_SIZE
-    out_idx = start + 1
-    print(k, start, end, run_len)
+    assert len(input_pages) == len(output_pages)
+
+    # TODO: Replace the following with k-way merge implementation
+    L = [0] * (len(input_pages) * PAGE_SIZE)
+    for i, page in enumerate(input_pages):
+        read_page(page, L, i * PAGE_SIZE)
+    L.sort()
+    for i in range(len(output_pages)):
+        write_page(output_pages[i], L, i * PAGE_SIZE)
 
 
 def main():
@@ -76,32 +88,49 @@ def main():
 
     # Phase 1: sorting
     i = 0
-    out_idx = 1
+    tempfiles = list()
     for filename in sorted(glob.glob("*.txt")):
-        read_page(filename, memory, i * PAGE_SIZE)
+        with open(filename) as fin:
+            read_page(fin, memory, i * PAGE_SIZE)
         if i + 1 == B:
             memory.sort()
             for idx in range(0, len(memory), PAGE_SIZE):
-                write_page(f"{out_idx}.txt", memory, idx)
-                out_idx += 1
+                fp = tempfile.TemporaryFile("w+")
+                write_page(fp, memory, idx)
+                tempfiles.append(fp)
             i = 0
         else:
             i += 1
     if i != 0:
         qsort(memory, 0, i * PAGE_SIZE - 1)
         for idx in range(0, i * PAGE_SIZE, PAGE_SIZE):
-            write_page(f"{out_idx}.txt", memory, idx)
-            out_idx += 1
+            fp = tempfile.TemporaryFile("w+")
+            write_page(fp, memory, idx)
+            tempfiles.append(fp)
 
     # Phase 2: merging
-    num_pages = out_idx - 1
-    out_idx = 0
+    num_pages = len(tempfiles)
     run_len = B
     k = B - 1
     while run_len < num_pages:
         for i in range(0, num_pages, k * run_len):
-            merge(memory, k, i, min(i + k * run_len, num_pages), run_len)
+            start = i
+            end = min(i + k * run_len, num_pages)
+            pages = tempfiles[start:end]
+            out_pages = [tempfile.TemporaryFile("w+")
+                         for _ in range(len(pages))]
+            merge(memory, k, run_len, pages, out_pages)
+            for j in range(start, end):
+                tempfiles[j].close()
+                tempfiles[j] = out_pages[j - start]
         run_len <<= 1
+
+    # Output and Close temporary files
+    for i, fp in enumerate(tempfiles):
+        fp.seek(0)
+        with open(f"{i+1}.txt", "w") as fout:
+            shutil.copyfileobj(fp, fout)
+        fp.close()
 
 
 if __name__ == "__main__":
