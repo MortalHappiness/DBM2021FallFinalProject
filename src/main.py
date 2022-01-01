@@ -4,6 +4,31 @@ from typing import List
 PAGE_SIZE = 2
 
 
+def _partition(arr, low, high):
+    i = (low-1)
+    pivot = arr[high]
+    for j in range(low, high):
+        if arr[j] <= pivot:
+            i = i+1
+            arr[i], arr[j] = arr[j], arr[i]
+    arr[i+1], arr[high] = arr[high], arr[i+1]
+    return (i+1)
+
+
+def qsort(arr, low, high):
+    """
+    Quicksort arr from index low to index high inclusive.
+
+    Reference: https://www.geeksforgeeks.org/python-program-for-quicksort/
+    """
+    if len(arr) == 1:
+        return arr
+    if low < high:
+        pi = _partition(arr, low, high)
+        qsort(arr, low, pi-1)
+        qsort(arr, pi+1, high)
+
+
 def read_page(filename: str, memory: List[int], idx: int):
     """
     Read page into memory address idx.
@@ -63,8 +88,7 @@ def main():
         else:
             i += 1
     if i != 0:
-        # TODO: replace sorted function with custom inplace sorting function
-        memory[:i*PAGE_SIZE] = sorted(memory[:i*PAGE_SIZE])
+        qsort(memory, 0, i * PAGE_SIZE - 1)
         for idx in range(0, i * PAGE_SIZE, PAGE_SIZE):
             write_page(f"{out_idx}.txt", memory, idx)
             out_idx += 1
