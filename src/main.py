@@ -3,7 +3,7 @@ import heapq
 from typing import List, IO
 import tempfile
 import shutil
-from config import PAGE_SIZE, DATA_FOLDER
+from constants import PAGE_SIZE
 
 
 def _partition(arr, low, high):
@@ -86,8 +86,8 @@ def merge(memory: List[int],
     outused = 0
 
     pq = []
-    push = lambda x: h.heappush(pq, x)
-    pop = lambda: h.heappop(pq)
+    def push(x): return h.heappush(pq, x)
+    def pop(): return h.heappop(pq)
 
     # Push the first value of each group into pq
     for i in range(groups):
@@ -123,19 +123,26 @@ def merge(memory: List[int],
 
         # Push a new value into page if there's a value
         if used[from_group] != PAGE_SIZE:
-            push((memory[from_group * PAGE_SIZE + used[from_group]], 
+            push((memory[from_group * PAGE_SIZE + used[from_group]],
                   from_group))
             used[from_group] += 1
 
 
-def solve(n: int):
+def external_merge_sort(n: int, data_folder: str = "."):
+    """
+    External merge sort.
+
+    Arguments:
+        n: memory size
+        data_folder: The folder containing the input text files
+    """
     memory = [0] * n
     B = n // PAGE_SIZE
 
     # Phase 1: sorting
     i = 0
     tempfiles = list()
-    for filename in sorted(glob.glob(f"{DATA_FOLDER}/*.txt")):
+    for filename in sorted(glob.glob(f"{data_folder}/*.txt")):
         with open(filename) as fin:
             read_page(fin, memory, i * PAGE_SIZE)
         if i + 1 == B:
@@ -174,14 +181,14 @@ def solve(n: int):
     # Output and Close temporary files
     for i, fp in enumerate(tempfiles):
         fp.seek(0)
-        with open(f"{DATA_FOLDER}/{i}.txt", "w") as fout:
+        with open(f"{data_folder}/{i+1}.txt", "w") as fout:
             shutil.copyfileobj(fp, fout)
         fp.close()
 
 
 def main():
     n = int(input("n = "))
-    solve(n)
+    external_merge_sort(n)
 
 
 if __name__ == "__main__":

@@ -1,11 +1,15 @@
 import unittest
 import random
-import pathlib
-from config import PAGE_SIZE, DATA_FOLDER
-from main import solve
+import os
+import shutil
+import uuid
+from main import external_merge_sort
+
+DATA_FOLDER = "data"
+NumbersInAFile = 100
+memory_sizes = list(range(300, 1100, 100))
 
 # ensure data folder exists
-pathlib.Path(DATA_FOLDER).mkdir(exist_ok=True)
 
 
 def split_nums(nums, k):
@@ -18,33 +22,29 @@ def split_nums(nums, k):
 
 
 def write_to_txt_files(strs):
-    for index, s in enumerate(strs):
-        with open(f"{DATA_FOLDER}/{index}.txt", "w") as f:
-            f.write(s)
+    for s in strs:
+        with open(os.path.join(DATA_FOLDER, uuid.uuid4().hex + ".txt"), "w") as fout:
+            fout.write(s)
 
 
 class TestExternalMergeSort(unittest.TestCase):
     def setUp(self):
-        # default constants
-        self.TestSize = 1000
-        self.NumbersInAFile = PAGE_SIZE
+        shutil.rmtree(DATA_FOLDER)
+        os.mkdir(DATA_FOLDER)
 
-    def test_main(self):
-        n = self.TestSize
-        nums = [random.randint(1, n * 2) for i in range(n)]
-        strs = split_nums(nums, self.NumbersInAFile)
+    def test_300_memory_size_500_numbers(self):
+        n = 300
+        nums = [random.randint(1, 500 * 2) for i in range(500)]
+        strs = split_nums(nums, NumbersInAFile)
         write_to_txt_files(strs)
-        # print("value:", nums)
         nums.sort()
-        # print("sort :", nums)
-        sorted_strs = split_nums(nums, self.NumbersInAFile)
-
-        solve(self.TestSize)
-
-        for index, s in enumerate(sorted_strs):
-            with open(f"{DATA_FOLDER}/{index}.txt", "r") as f:
-                res = f.read()
-                self.assertEqual(s, res, f"Unmatched result in '{index}.txt'")
+        sorted_strs = split_nums(nums, NumbersInAFile)
+        external_merge_sort(n, data_folder=DATA_FOLDER)
+        for i, s in enumerate(sorted_strs):
+            with open(os.path.join(DATA_FOLDER, f"{i+1}.txt")) as fin:
+                res = fin.read()
+                self.assertEqual(
+                    s, res, f"Unmatched result in '{i+1}.txt'")
 
 
 if __name__ == "__main__":
