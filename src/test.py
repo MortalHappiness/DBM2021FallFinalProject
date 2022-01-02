@@ -26,7 +26,7 @@ def write_to_txt_files(strs):
 class TestExternalMergeSort(unittest.TestCase):
     def setUp(self):
         # default constants
-        self.TestSize = 16
+        self.TestSize = 1000
         self.NumbersInAFile = PAGE_SIZE
 
     def test_main(self):
@@ -34,13 +34,12 @@ class TestExternalMergeSort(unittest.TestCase):
         nums = [random.randint(1, n * 2) for i in range(n)]
         strs = split_nums(nums, self.NumbersInAFile)
         write_to_txt_files(strs)
+        # print("value:", nums)
         nums.sort()
+        # print("sort :", nums)
         sorted_strs = split_nums(nums, self.NumbersInAFile)
 
         solve(self.TestSize)
-
-        # do EMS here
-        # ....
 
         for index, s in enumerate(sorted_strs):
             with open(f"{DATA_FOLDER}/{index}.txt", "r") as f:

@@ -1,3 +1,3 @@
 
-PAGE_SIZE = 2
+PAGE_SIZE = 50
 DATA_FOLDER = "./data/"
