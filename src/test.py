@@ -20,8 +20,7 @@ def split_nums(nums, k):
 
 def write_to_txt_files(strs):
     for i, s in enumerate(strs):
-        # with open(os.path.join(DATA_FOLDER, uuid.uuid4().hex + ".txt"), "w") as fout:
-        with open(os.path.join(DATA_FOLDER, f"{i+1}.txt"), "w") as fout:
+        with open(os.path.join(DATA_FOLDER, uuid.uuid4().hex + ".txt"), "w") as fout:
             fout.write(s)
 
 
