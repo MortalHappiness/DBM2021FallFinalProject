@@ -24,8 +24,8 @@ def write_to_txt_files(strs):
 class TestExternalMergeSort(unittest.TestCase):
     def setUp(self):
         # default constants
-        self.TestSize = 10000
-        self.NumbersInAFile = 100
+        self.TestSize = 16
+        self.NumbersInAFile = 2
 
     def test_main(self):
         n = self.TestSize

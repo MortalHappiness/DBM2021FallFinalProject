@@ -1,4 +1,5 @@
 import glob
+import heapq
 from typing import List, IO
 import tempfile
 import shutil
@@ -71,14 +72,61 @@ def merge(memory: List[int],
     """
     assert len(memory) == (k + 1) * PAGE_SIZE
     assert len(input_pages) == len(output_pages)
+    print("called", memory, k, run_len, input_pages, output_pages)
 
-    # TODO: Replace the following with k-way merge implementation
-    L = [0] * (len(input_pages) * PAGE_SIZE)
-    for i, page in enumerate(input_pages):
-        read_page(page, L, i * PAGE_SIZE)
-    L.sort()
-    for i in range(len(output_pages)):
-        write_page(output_pages[i], L, i * PAGE_SIZE)
+    h = heapq
+
+    n = len(input_pages)
+    curs = [i for i in range(0, n, run_len)]
+    ends = [min(n, i + run_len) for i in range(0, n, run_len)]
+    assert len(curs) <= k
+    assert len(ends) <= k
+    assert len(curs) == len(ends)
+    used = [PAGE_SIZE for i in range(len(curs))]
+    outpages = 0
+    outused = 0
+
+    pq = []
+    push = lambda x: h.heappush(pq, x)
+    pop = lambda: h.heappop(pq)
+
+    # Push the first value of each group into pq
+    for i in range(len(lefts)):
+        if used[i] == 0 and curs[i] != ends[i]:
+            read_page(input_pages[curs[i]], memory, i * PAGE_SIZE)
+            used[i] = 0
+            curs[i] += 1
+
+        assert used[i] == 0
+        push((memory[i * PAGE_SIZE], i))
+        used[i] += 1
+
+    while outpages < len(output_pages):
+        [val, from_group] = pop()
+
+        # Write val into output page
+        memory[k * PAGE_SIZE + outused] = val
+        outused += 1
+
+        # Write output page out if full
+        if outused == PAGE_SIZE:
+            write_page(out_pages[outpages], memory, k * PAGE_SIZE)
+            outused = 0
+            outpages += 1
+
+        # Read a new page if this page is empty
+        if used[from_group] == PAGE_SIZE and \
+           curs[from_group] != ends[from_group]:
+            read_page(input_pages[curs[from_group]], memory,
+                      from_group * PAGE_SIZE)
+            used[i] = 0
+            curs[i] += 1
+
+        # Push a new value into page if there's a value
+        if used[from_group] != PAGE_SIZE:
+            push((memory[from_group * PAGE_SIZE + used[from_group]], 
+                  from_group))
+            used[from_group] += 1
 
 
 def main():
@@ -89,7 +137,7 @@ def main():
     # Phase 1: sorting
     i = 0
     tempfiles = list()
-    for filename in sorted(glob.glob("*.txt")):
+    for filename in sorted(glob.glob("data/*.txt")):
         with open(filename) as fin:
             read_page(fin, memory, i * PAGE_SIZE)
         if i + 1 == B:
