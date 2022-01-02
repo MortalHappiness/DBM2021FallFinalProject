@@ -3,9 +3,7 @@ import heapq
 from typing import List, IO
 import tempfile
 import shutil
-
-PAGE_SIZE = 2
-DATA_FOLDER = "./data/"
+from config import PAGE_SIZE, DATA_FOLDER
 
 
 def _partition(arr, low, high):
@@ -130,8 +128,7 @@ def merge(memory: List[int],
             used[from_group] += 1
 
 
-def main():
-    n = int(input("n = "))
+def solve(n: int):
     memory = [0] * n
     B = n // PAGE_SIZE
 
@@ -180,6 +177,11 @@ def main():
         with open(f"{DATA_FOLDER}/{i}.txt", "w") as fout:
             shutil.copyfileobj(fp, fout)
         fp.close()
+
+
+def main():
+    n = int(input("n = "))
+    solve(n)
 
 
 if __name__ == "__main__":

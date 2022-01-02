@@ -1,9 +1,11 @@
 import unittest
 import random
 import pathlib
+from config import PAGE_SIZE, DATA_FOLDER
+from main import solve
 
 # ensure data folder exists
-pathlib.Path("./data").mkdir(exist_ok=True)
+pathlib.Path(DATA_FOLDER).mkdir(exist_ok=True)
 
 
 def split_nums(nums, k):
@@ -17,7 +19,7 @@ def split_nums(nums, k):
 
 def write_to_txt_files(strs):
     for index, s in enumerate(strs):
-        with open(f"data/{index}.txt", "w") as f:
+        with open(f"{DATA_FOLDER}/{index}.txt", "w") as f:
             f.write(s)
 
 
@@ -25,7 +27,7 @@ class TestExternalMergeSort(unittest.TestCase):
     def setUp(self):
         # default constants
         self.TestSize = 16
-        self.NumbersInAFile = 2
+        self.NumbersInAFile = PAGE_SIZE
 
     def test_main(self):
         n = self.TestSize
@@ -35,11 +37,13 @@ class TestExternalMergeSort(unittest.TestCase):
         nums.sort()
         sorted_strs = split_nums(nums, self.NumbersInAFile)
 
+        solve(self.TestSize)
+
         # do EMS here
         # ....
 
         for index, s in enumerate(sorted_strs):
-            with open(f"data/{index}.txt", "r") as f:
+            with open(f"{DATA_FOLDER}/{index}.txt", "r") as f:
                 res = f.read()
                 self.assertEqual(s, res, f"Unmatched result in '{index}.txt'")
 
