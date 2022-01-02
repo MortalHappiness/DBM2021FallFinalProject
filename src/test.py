@@ -9,8 +9,6 @@ DATA_FOLDER = "data"
 NumbersInAFile = 100
 memory_sizes = list(range(300, 1100, 100))
 
-# ensure data folder exists
-
 
 def split_nums(nums, k):
     i = 0
