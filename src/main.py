@@ -5,6 +5,7 @@ import tempfile
 import shutil
 
 PAGE_SIZE = 2
+DATA_FOLDER = "./data/"
 
 
 def _partition(arr, low, high):
@@ -72,7 +73,6 @@ def merge(memory: List[int],
     """
     assert len(memory) == (k + 1) * PAGE_SIZE
     assert len(input_pages) == len(output_pages)
-    print("called", memory, k, run_len, input_pages, output_pages)
 
     h = heapq
 
@@ -83,6 +83,7 @@ def merge(memory: List[int],
     assert len(ends) <= k
     assert len(curs) == len(ends)
     used = [PAGE_SIZE for i in range(len(curs))]
+    groups = len(used)
     outpages = 0
     outused = 0
 
@@ -91,8 +92,8 @@ def merge(memory: List[int],
     pop = lambda: h.heappop(pq)
 
     # Push the first value of each group into pq
-    for i in range(len(lefts)):
-        if used[i] == 0 and curs[i] != ends[i]:
+    for i in range(groups):
+        if used[i] == PAGE_SIZE and curs[i] != ends[i]:
             read_page(input_pages[curs[i]], memory, i * PAGE_SIZE)
             used[i] = 0
             curs[i] += 1
@@ -110,7 +111,7 @@ def merge(memory: List[int],
 
         # Write output page out if full
         if outused == PAGE_SIZE:
-            write_page(out_pages[outpages], memory, k * PAGE_SIZE)
+            write_page(output_pages[outpages], memory, k * PAGE_SIZE)
             outused = 0
             outpages += 1
 
@@ -119,8 +120,8 @@ def merge(memory: List[int],
            curs[from_group] != ends[from_group]:
             read_page(input_pages[curs[from_group]], memory,
                       from_group * PAGE_SIZE)
-            used[i] = 0
-            curs[i] += 1
+            used[from_group] = 0
+            curs[from_group] += 1
 
         # Push a new value into page if there's a value
         if used[from_group] != PAGE_SIZE:
@@ -137,7 +138,7 @@ def main():
     # Phase 1: sorting
     i = 0
     tempfiles = list()
-    for filename in sorted(glob.glob("data/*.txt")):
+    for filename in sorted(glob.glob(f"{DATA_FOLDER}/*.txt")):
         with open(filename) as fin:
             read_page(fin, memory, i * PAGE_SIZE)
         if i + 1 == B:
@@ -176,7 +177,7 @@ def main():
     # Output and Close temporary files
     for i, fp in enumerate(tempfiles):
         fp.seek(0)
-        with open(f"{i+1}.txt", "w") as fout:
+        with open(f"{DATA_FOLDER}/{i}.txt", "w") as fout:
             shutil.copyfileobj(fp, fout)
         fp.close()
 
