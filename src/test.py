@@ -41,38 +41,44 @@ class TestBase(unittest.TestCase):
             raise ValueError("data_folder must not be empty string")
         reset_folder(cls.data_folder)
 
-    def prepare_folder(self, memory_size, total_size):
-        sub_folder = f"memory_{memory_size}_total_{total_size}"
+    def prepare_folder(self, memory_size, total_size, max_val):
+        sub_folder = f"memory_{memory_size}_total_{total_size}_maxval_{max_val}"
         data_folder = os.path.join(type(self).data_folder, sub_folder)
         reset_folder(data_folder)
         return data_folder
 
-    def prepare_input(self, memory_size, total_size):
+    def prepare_input(self, memory_size, total_size, max_val):
         data_folder = self.prepare_folder(
-            memory_size=memory_size, total_size=total_size)
-        nums = [random.randint(1, total_size * 2) for _ in range(total_size)]
+            memory_size=memory_size, total_size=total_size, max_val=max_val)
+        nums = [random.randint(0, max_val) for _ in range(total_size)]
         strs = split_nums(nums, PAGE_SIZE)
         write_to_txt_files(strs, folder=data_folder)
         return data_folder, nums
 
-    def run_single_test(self, memory_size, total_size):
+    def run_single_test(self, memory_size, total_size, max_val):
         raise NotImplementedError
 
     def run_testcase_matrix(self):
         for memory_size in range(300, 1100, 100):
             for total_size in [300, 5000, 10000]:
-                with self.subTest(msg=f"subtest", memory_size=memory_size, total_size=total_size):
-                    self.run_single_test(
-                        memory_size=memory_size, total_size=total_size)
+                for max_val in [10, 1000, 50000]:
+                    with self.subTest(msg=f"subtest",
+                                      memory_size=memory_size,
+                                      total_size=total_size,
+                                      max_val=max_val):
+                        self.run_single_test(
+                            memory_size=memory_size,
+                            total_size=total_size,
+                            max_val=max_val)
 
 
 class TestPhase1(TestBase):
     data_folder = os.path.join(DATA_FOLDER, "phase1")
 
-    def run_single_test(self, memory_size, total_size):
+    def run_single_test(self, memory_size, total_size, max_val):
         random.seed(0)
         data_folder, nums = self.prepare_input(
-            memory_size=memory_size, total_size=total_size)
+            memory_size=memory_size, total_size=total_size, max_val=max_val)
 
         for i in range(0, total_size, memory_size):
             qsort(nums, i, min(i + memory_size, total_size) - 1)
@@ -97,9 +103,9 @@ class TestPhase1(TestBase):
 class TestExternalMergeSort(TestBase):
     data_folder = os.path.join(DATA_FOLDER, "integration")
 
-    def run_single_test(self, memory_size, total_size):
+    def run_single_test(self, memory_size, total_size, max_val):
         data_folder, nums = self.prepare_input(
-            memory_size=memory_size, total_size=total_size)
+            memory_size=memory_size, total_size=total_size, max_val=max_val)
         nums.sort()
         sorted_strs = split_nums(nums, PAGE_SIZE)
         external_merge_sort(memory_size, data_folder=data_folder)
@@ -107,7 +113,7 @@ class TestExternalMergeSort(TestBase):
             with open(os.path.join(data_folder, f"{i+1}.txt")) as fin:
                 res = fin.read()
                 self.assertEqual(
-                    s, res, f"Unmatched result in '{i+1}.txt'. {memory_size=}, {total_size=}")
+                    s, res, f"Unmatched result in '{i+1}.txt'. {memory_size=}, {total_size=}, {max_val=}")
 
     def test_different_memory_size_and_numbers(self):
         self.run_testcase_matrix()
