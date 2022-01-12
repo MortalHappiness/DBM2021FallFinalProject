@@ -173,7 +173,7 @@ def phase2_merging(memory: List[int], tempfiles: List[IO]):
             for j in range(start, end):
                 tempfiles[j].close()
                 tempfiles[j] = out_pages[j - start]
-        run_len <<= 1
+        run_len *= k
 
 
 def external_merge_sort(n: int, data_folder: str = "."):
