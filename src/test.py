@@ -59,9 +59,9 @@ class TestBase(unittest.TestCase):
         raise NotImplementedError
 
     def run_testcase_matrix(self):
-        for memory_size in range(300, 1100, 100):
-            for total_size in [300, 5000, 10000]:
-                for max_val in [10, 1000, 50000]:
+        for memory_size in range(6, 9, 2):
+            for total_size in [60]:
+                for max_val in [20]:
                     with self.subTest(msg=f"subtest",
                                       memory_size=memory_size,
                                       total_size=total_size,
@@ -106,7 +106,13 @@ class TestExternalMergeSort(TestBase):
     def run_single_test(self, memory_size, total_size, max_val):
         data_folder, nums = self.prepare_input(
             memory_size=memory_size, total_size=total_size, max_val=max_val)
+
+        print(nums)
+
         nums.sort()
+
+        print(nums, data_folder)
+
         sorted_strs = split_nums(nums, PAGE_SIZE)
         external_merge_sort(memory_size, data_folder=data_folder)
         for i, s in enumerate(sorted_strs):

@@ -69,6 +69,7 @@ def merge(memory: List[int],
     Merge pages, run_len is the number of pages in a sorted run.
     Read from input_pages and write to output_pages.
     """
+    print("start")
     assert len(memory) == (k + 1) * PAGE_SIZE
     assert len(input_pages) == len(output_pages)
 
@@ -95,6 +96,7 @@ def merge(memory: List[int],
             read_page(input_pages[curs[i]], memory, i * PAGE_SIZE)
             used[i] = 0
             curs[i] += 1
+            print("read new ", i, memory[i * PAGE_SIZE : (i + 1) * PAGE_SIZE])
 
         assert used[i] == 0
         push((memory[i * PAGE_SIZE], i))
@@ -112,6 +114,7 @@ def merge(memory: List[int],
             write_page(output_pages[outpages], memory, k * PAGE_SIZE)
             outused = 0
             outpages += 1
+            print("output new ", outpages, memory[k * PAGE_SIZE : (k + 1) * PAGE_SIZE])
 
         # Read a new page if this page is empty
         if used[from_group] == PAGE_SIZE and \
@@ -120,6 +123,7 @@ def merge(memory: List[int],
                       from_group * PAGE_SIZE)
             used[from_group] = 0
             curs[from_group] += 1
+            print("read new ", from_group, memory[from_group * PAGE_SIZE : (from_group + 1) * PAGE_SIZE])
 
         # Push a new value into page if there's a value
         if used[from_group] != PAGE_SIZE:
@@ -173,7 +177,7 @@ def phase2_merging(memory: List[int], tempfiles: List[IO]):
             for j in range(start, end):
                 tempfiles[j].close()
                 tempfiles[j] = out_pages[j - start]
-        run_len <<= 1
+        run_len *= k
 
 
 def external_merge_sort(n: int, data_folder: str = "."):
