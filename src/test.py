@@ -25,12 +25,17 @@ def write_to_txt_files(strs):
 
 
 class TestExternalMergeSort(unittest.TestCase):
+    @classmethod
+    def setUpClass(cls):
+        random.seed(0)
+
     def cleanUp(self):
         shutil.rmtree(DATA_FOLDER, ignore_errors=True)
         os.mkdir(DATA_FOLDER)
 
     def auto_test_util(self, memory_size, total_size):
         nums = [random.randint(1, total_size * 2) for i in range(total_size)]
+        print(memory_size, total_size, nums[:10])
         strs = split_nums(nums, PAGE_SIZE)
         write_to_txt_files(strs)
         nums.sort()
@@ -43,11 +48,12 @@ class TestExternalMergeSort(unittest.TestCase):
                     s, res, f"Unmatched result in '{i+1}.txt'. memory_size={memory_size}, total_size={total_size}")
 
     def test_different_memory_size_and_numbers(self):
-        for memory_size in range(300, 900, 200):
+        for memory_size in range(300, 1100, 100):
             for total_size in [300, 5000, 10000]:
                 with self.subTest(msg=f"subtest", memory_size=memory_size, total_size=total_size):
                     self.cleanUp()
-                    self.auto_test_util(memory_size=memory_size, total_size=total_size)
+                    self.auto_test_util(
+                        memory_size=memory_size, total_size=total_size)
 
 
 if __name__ == "__main__":
