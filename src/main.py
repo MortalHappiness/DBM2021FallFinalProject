@@ -6,7 +6,7 @@ import shutil
 from constants import PAGE_SIZE
 
 
-def _partition(arr, low, high):
+def _partition(arr: List[int], low: int, high: int):
     i = (low-1)
     pivot = arr[high]
     for j in range(low, high):
@@ -17,7 +17,7 @@ def _partition(arr, low, high):
     return (i+1)
 
 
-def qsort(arr, low, high):
+def qsort(arr: List[int], low: int, high: int):
     """
     Quicksort arr from index low to index high inclusive.
 
@@ -128,20 +128,12 @@ def merge(memory: List[int],
             used[from_group] += 1
 
 
-def external_merge_sort(n: int, data_folder: str = "."):
-    """
-    External merge sort.
-
-    Arguments:
-        n: memory size
-        data_folder: The folder containing the input text files
-    """
-    memory = [0] * n
+def phase1_sorting(memory: List[int], data_folder: str):
+    n = len(memory)
     B = n // PAGE_SIZE
 
-    # Phase 1: sorting
     i = 0
-    tempfiles = list()
+    tempfiles: List[IO] = list()
     for filename in sorted(glob.glob(f"{data_folder}/*.txt")):
         with open(filename) as fin:
             read_page(fin, memory, i * PAGE_SIZE)
@@ -160,8 +152,13 @@ def external_merge_sort(n: int, data_folder: str = "."):
             fp = tempfile.TemporaryFile("w+")
             write_page(fp, memory, idx)
             tempfiles.append(fp)
+    return tempfiles
 
-    # Phase 2: merging
+
+def phase2_merging(memory: List[int], tempfiles: List[IO]):
+    n = len(memory)
+    B = n // PAGE_SIZE
+
     num_pages = len(tempfiles)
     run_len = B
     k = B - 1
@@ -177,6 +174,23 @@ def external_merge_sort(n: int, data_folder: str = "."):
                 tempfiles[j].close()
                 tempfiles[j] = out_pages[j - start]
         run_len <<= 1
+
+
+def external_merge_sort(n: int, data_folder: str = "."):
+    """
+    External merge sort.
+
+    Arguments:
+        n: memory size
+        data_folder: The folder containing the input text files
+    """
+    memory = [0] * n
+
+    # Phase 1: sorting
+    tempfiles = phase1_sorting(memory, data_folder)
+
+    # Phase 2: merging
+    phase2_merging(memory, tempfiles)
 
     # Output and Close temporary files
     for i, fp in enumerate(tempfiles):
